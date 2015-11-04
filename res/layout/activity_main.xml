@@ -1,0 +1,38 @@
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:paddingBottom="@dimen/activity_vertical_margin"
+    android:paddingLeft="@dimen/activity_horizontal_margin"
+    android:paddingRight="@dimen/activity_horizontal_margin"
+    android:paddingTop="@dimen/activity_vertical_margin"
+    tools:context="com.example.blue1.MainActivity" >
+
+
+	<Button
+	android:id="@+id/bActivar"
+	android:layout_width="wrap_content"
+	android:layout_height="wrap_content"
+	android:text="Activar Bluetooth" />
+	
+	<Button
+	android:id="@+id/bBuscar"
+	android:layout_width="wrap_content"
+	android:layout_height="wrap_content"
+	android:layout_toRightOf="@+id/bActivar"
+	android:text="Buscar" />
+	
+	<TextView
+	    android:id="@+id/tEstado"
+	android:layout_width="fill_parent"
+	android:layout_height="wrap_content"
+	android:text="---" 
+	android:layout_below="@+id/bActivar"/>
+	<ListView 
+	    android:id="@+id/lDisp"
+	    android:layout_below="@+id/tEstado"
+	    android:layout_width="wrap_content"
+	    android:layout_height="wrap_content"
+	    ></ListView>
+
+</RelativeLayout>
