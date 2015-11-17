@@ -1,10 +1,14 @@
 package com.example.blue1;
 
+import java.io.IOException;
+import java.io.OutputStream;
 import java.util.ArrayList;
+import java.util.UUID;
 
 import android.app.Activity;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
+import android.bluetooth.BluetoothSocket;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
@@ -15,6 +19,8 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.View.OnClickListener;
+import android.widget.AdapterView;
+import android.widget.AdapterView.OnItemClickListener;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.ListView;
@@ -33,6 +39,9 @@ public class MainActivity extends Activity {
 	//ArrayList de dispositivos
 	private ArrayList<BluetoothDevice> alBD = new ArrayList<BluetoothDevice>();
 	private ArrayList<String> arraylBDString = new ArrayList<String>();
+	
+	private BluetoothSocket transferSocket;
+	private static final UUID MIUDDI = UUID.fromString("00001101-0000-1000-8000-00805F9B34FB");
 
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
@@ -46,7 +55,7 @@ public class MainActivity extends Activity {
 		texto = (TextView)findViewById(R.id.tEstado);
 		listaDisp = (ListView)findViewById(R.id.lDisp);
 		
-
+		listaDisp.setOnItemClickListener(listaP);
 		
 		ba = BluetoothAdapter.getDefaultAdapter();
 		if (ba==null){
@@ -78,6 +87,14 @@ public class MainActivity extends Activity {
 		
 		*/
 	}
+	private OnItemClickListener listaP = new OnItemClickListener() {
+
+		public void onItemClick(AdapterView<?> arg0, View arg1, int pos,
+				long arg3) {
+			conectaServBlue(pos);
+			
+		}
+	};
 
 	private OnClickListener bActivarP = new OnClickListener() {
 		public void onClick(View v) {
@@ -92,6 +109,35 @@ public class MainActivity extends Activity {
 		}
 	};
 	
+	private void conectaServBlue(int pos){
+		try{
+			ba.cancelDiscovery();
+			Log.i("Device",alBD.get(pos).getAddress());
+			BluetoothDevice bd = alBD.get(pos);
+			
+	        BluetoothSocket clientSocket 
+	          = bd.createRfcommSocketToServiceRecord(MIUDDI);
+
+	        // Block until server connection accepted.
+	        clientSocket.connect();
+
+	        // Start listening for messages.
+	        StringBuilder incoming = new StringBuilder();
+	        //listenForMessages(clientSocket, incoming);
+
+	        // Add a reference to the socket used to send messages.
+	        transferSocket = clientSocket;
+	        
+	        //enviar, prueba
+	        OutputStream os = clientSocket.getOutputStream();
+	        String msg = "Hola!!!";
+	        byte[] buff = msg.getBytes();
+	        os.write(buff);
+
+	      } catch (IOException e) {
+	        Log.e("BLUETOOTH", "Blueooth client I/O Exception", e);
+	      }
+	}
 	private void iniBluetooth() {
 	      if (!ba.isEnabled()) { 
 	        // Bluetooth isn't enabled, prompt the user to turn it on.
