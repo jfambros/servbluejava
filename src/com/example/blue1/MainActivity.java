@@ -23,6 +23,7 @@ import android.widget.AdapterView;
 import android.widget.AdapterView.OnItemClickListener;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
+import android.widget.EditText;
 import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -34,6 +35,8 @@ public class MainActivity extends Activity {
 	protected static final int SOLICITADESCUBRIMIENTO = 1;	
 	private Button bActivar;
 	private Button bBuscar;
+	private Button bEnviar;
+	private EditText txtMsg;
 	private TextView texto;
 	private ListView listaDisp;
 	//ArrayList de dispositivos
@@ -50,12 +53,14 @@ public class MainActivity extends Activity {
 		bActivar.setOnClickListener(bActivarP);
 		bBuscar = (Button)findViewById(R.id.bBuscar);
 		bBuscar.setOnClickListener(bBuscarP);
+		bEnviar = (Button)findViewById(R.id.bEnviar);
+		bEnviar.setOnClickListener(bEnviarP);
 		
 		
 		texto = (TextView)findViewById(R.id.tEstado);
 		listaDisp = (ListView)findViewById(R.id.lDisp);
 		
-		listaDisp.setOnItemClickListener(listaP);
+
 		
 		ba = BluetoothAdapter.getDefaultAdapter();
 		if (ba==null){
@@ -65,6 +70,8 @@ public class MainActivity extends Activity {
 			String dir = ba.getAddress();
 			String nombre = ba.getName();
 		}
+		
+		listaDisp.setOnItemClickListener(listaP);
 		
 		/*
 		blueAdap = BluetoothAdapter.getDefaultAdapter();
@@ -87,6 +94,13 @@ public class MainActivity extends Activity {
 		
 		*/
 	}
+	
+	private OnClickListener bEnviarP = new OnClickListener() {
+		public void onClick(View v) {
+			enviaMsg();
+			
+		}
+	};
 	private OnItemClickListener listaP = new OnItemClickListener() {
 
 		public void onItemClick(AdapterView<?> arg0, View arg1, int pos,
@@ -99,6 +113,7 @@ public class MainActivity extends Activity {
 	private OnClickListener bActivarP = new OnClickListener() {
 		public void onClick(View v) {
 			iniBluetooth();
+
 		}
 	};
 	
@@ -109,6 +124,21 @@ public class MainActivity extends Activity {
 		}
 	};
 	
+	private void enviaMsg(){
+		 //enviar, prueba
+        OutputStream os;
+		try {
+			os = transferSocket.getOutputStream();
+	        String msg = "Hola!!!\n";
+	        byte[] buff = msg.getBytes();
+	        os.write(buff);
+		} catch (Exception e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+
+	}
+	
 	private void conectaServBlue(int pos){
 		try{
 			ba.cancelDiscovery();
@@ -117,25 +147,19 @@ public class MainActivity extends Activity {
 			
 	        BluetoothSocket clientSocket 
 	          = bd.createRfcommSocketToServiceRecord(MIUDDI);
-
+	        Log.i("Conecta", "Cliente...");
 	        // Block until server connection accepted.
 	        clientSocket.connect();
-
+	        Log.i("Conecta", "Conectando...");
 	        // Start listening for messages.
 	        StringBuilder incoming = new StringBuilder();
 	        //listenForMessages(clientSocket, incoming);
 
 	        // Add a reference to the socket used to send messages.
 	        transferSocket = clientSocket;
-	        
-	        //enviar, prueba
-	        OutputStream os = clientSocket.getOutputStream();
-	        String msg = "Hola!!!";
-	        byte[] buff = msg.getBytes();
-	        os.write(buff);
 
 	      } catch (IOException e) {
-	        Log.e("BLUETOOTH", "Blueooth client I/O Exception", e);
+	        Log.e("BLUETOOTH ", "Blueooth client I/O Exception", e);
 	      }
 	}
 	private void iniBluetooth() {
@@ -176,9 +200,11 @@ public class MainActivity extends Activity {
 			        alBD.add(remoteDevice);
 
 			        Log.d(TAG, "Discovered " + remoteDeviceName);
-			        arraylBDString.add(remoteDeviceName);
-			        ArrayAdapter<String> aaDisp = new ArrayAdapter<String>(MainActivity.this, android.R.layout.simple_list_item_1,arraylBDString);
-			        listaDisp.setAdapter(aaDisp);
+			        if (remoteDeviceName!=null){
+			        	arraylBDString.add(remoteDeviceName);
+				        ArrayAdapter<String> aaDisp = new ArrayAdapter<String>(MainActivity.this, android.R.layout.simple_list_item_1,arraylBDString);
+				        listaDisp.setAdapter(aaDisp);
+			        }
 			
 		}
 	};
