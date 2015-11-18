@@ -8,12 +8,14 @@ import java.util.UUID;
 import android.app.Activity;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
+import android.bluetooth.BluetoothServerSocket;
 import android.bluetooth.BluetoothSocket;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.os.Bundle;
+import android.os.SystemClock;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -45,6 +47,8 @@ public class MainActivity extends Activity {
 	
 	private BluetoothSocket transferSocket;
 	private static final UUID MIUDDI = UUID.fromString("00001101-0000-1000-8000-00805F9B34FB");
+	
+
 
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
@@ -97,8 +101,7 @@ public class MainActivity extends Activity {
 	
 	private OnClickListener bEnviarP = new OnClickListener() {
 		public void onClick(View v) {
-			enviaMsg();
-			
+			enviaMsg();		
 		}
 	};
 	private OnItemClickListener listaP = new OnItemClickListener() {
@@ -128,8 +131,10 @@ public class MainActivity extends Activity {
 		 //enviar, prueba
         OutputStream os;
 		try {
+			txtMsg = (EditText)findViewById(R.id.txtMsg);
+			
 			os = transferSocket.getOutputStream();
-	        String msg = "Hola!!!\n";
+	        String msg = txtMsg.getText().toString()+"\n";
 	        byte[] buff = msg.getBytes();
 	        os.write(buff);
 		} catch (Exception e) {
@@ -141,24 +146,33 @@ public class MainActivity extends Activity {
 	
 	private void conectaServBlue(int pos){
 		try{
-			ba.cancelDiscovery();
+			
 			Log.i("Device",alBD.get(pos).getAddress());
 			BluetoothDevice bd = alBD.get(pos);
+			/*
+			BluetoothSocket socket = bd.createInsecureRfcommSocketToServiceRecord(MIUDDI);
+			Method m = bd.getClass().getMethod("createInsecureRfcommSocket", new Class[] {int.class});
+			socket = (BluetoothSocket) m.invoke(bd, 1);*/
+			SystemClock.sleep(1000);
+			ba.cancelDiscovery();
+			SystemClock.sleep(1000);
+			//socket.connect();
+			
 			
 	        BluetoothSocket clientSocket 
 	          = bd.createRfcommSocketToServiceRecord(MIUDDI);
-	        Log.i("Conecta", "Cliente...");
+	        Log.i("Conecta", "Cliente conec...");
 	        // Block until server connection accepted.
 	        clientSocket.connect();
-	        Log.i("Conecta", "Conectando...");
-	        // Start listening for messages.
-	        StringBuilder incoming = new StringBuilder();
+	        Log.i("Conecta", "Conectando.");
+
 	        //listenForMessages(clientSocket, incoming);
 
 	        // Add a reference to the socket used to send messages.
 	        transferSocket = clientSocket;
+	        Log.i("Conecta", "Enlazando...");
 
-	      } catch (IOException e) {
+	      } catch (Exception e) {
 	        Log.e("BLUETOOTH ", "Blueooth client I/O Exception", e);
 	      }
 	}
@@ -175,12 +189,14 @@ public class MainActivity extends Activity {
 	    }
 	
 	private void iniciarDescub() {
+		alBD.clear();
 	      registerReceiver(brDescubrir,
 	                       new IntentFilter(BluetoothDevice.ACTION_FOUND));
 
 	      if (ba.isEnabled() && !ba.isDiscovering())
 	        alBD.clear();
-	        ba.startDiscovery();
+	      
+	      ba.startDiscovery();
 	    }
 	
 	private void iniciaGui(){
@@ -208,10 +224,39 @@ public class MainActivity extends Activity {
 			
 		}
 	};
+
 	
-	private void descubreDisp(){
-		
-	}
+	private UUID startServerSocket(BluetoothAdapter bluetooth) {
+	      UUID uuid = UUID.fromString("a60f35f0-b93a-11de-8a39-08002009c666");
+	      String name = "bluetoothserver";
+
+	      try {
+	        final BluetoothServerSocket btserver = 
+	          bluetooth.listenUsingRfcommWithServiceRecord(name, uuid);
+
+	        Thread acceptThread = new Thread(new Runnable() {
+	          public void run() {
+	            try {
+	              // Block until client connection established.
+	              BluetoothSocket serverSocket = btserver.accept();
+	              // Start listening for messages.
+	              StringBuilder incoming = new StringBuilder();
+	              listenForMessages(serverSocket, incoming);
+	              // Add a reference to the socket used to send messages.
+	              transferSocket = serverSocket;
+	            } catch (IOException e) {
+	              Log.e("BLUETOOTH", "Server connection IO Exception", e);
+	            }
+	          }
+	        });
+	        acceptThread.start();
+	      } catch (IOException e) {
+	        Log.e("BLUETOOTH", "Socket listener IO Exception", e);
+	      }
+	      return uuid;
+	    }	
+	
+	
 	
 	protected void onActivityResult(int requestCode, int resultCode, Intent data) {
 		if (requestCode == BLUETOOTH_ACT)
