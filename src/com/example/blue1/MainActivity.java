@@ -1,6 +1,7 @@
 package com.example.blue1;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.UUID;
@@ -47,6 +48,8 @@ public class MainActivity extends Activity {
 	
 	private BluetoothSocket transferSocket;
 	private static final UUID MIUDDI = UUID.fromString("00001101-0000-1000-8000-00805F9B34FB");
+	
+	private ServidorBlue servB;
 	
 
 
@@ -164,13 +167,16 @@ public class MainActivity extends Activity {
 	        Log.i("Conecta", "Cliente conec...");
 	        // Block until server connection accepted.
 	        clientSocket.connect();
-	        Log.i("Conecta", "Conectando.");
+	        Log.i("Conecta", "Conectando..");
+	        StringBuilder incoming = new StringBuilder();
 
 	        //listenForMessages(clientSocket, incoming);
 
 	        // Add a reference to the socket used to send messages.
 	        transferSocket = clientSocket;
 	        Log.i("Conecta", "Enlazando...");
+	        servB = new ServidorBlue(ba, MIUDDI);
+	        servB.start();
 
 	      } catch (Exception e) {
 	        Log.e("BLUETOOTH ", "Blueooth client I/O Exception", e);
@@ -185,10 +191,12 @@ public class MainActivity extends Activity {
 	        // Bluetooth is enabled, initialize the UI.
 	        //initBluetoothUI();
 	    	  iniciaGui();
+	    	  
 	      }
 	    }
 	
 	private void iniciarDescub() {
+		Log.i("iniciando","buscando");
 		alBD.clear();
 	      registerReceiver(brDescubrir,
 	                       new IntentFilter(BluetoothDevice.ACTION_FOUND));
@@ -255,6 +263,41 @@ public class MainActivity extends Activity {
 	      }
 	      return uuid;
 	    }	
+	
+    private boolean listening = false;
+    
+	private void listenForMessages(BluetoothSocket socket, 
+            StringBuilder incoming) {
+	listening = true;
+	
+	
+	int bufferSize = 1024;
+	byte[] buffer = new byte[bufferSize];
+	
+	try {
+		InputStream instream = socket.getInputStream();
+		int bytesRead = -1;
+		
+		while (listening) {
+			bytesRead = instream.read(buffer);
+			if (bytesRead != -1) {
+				String result = "";
+				while ((bytesRead == bufferSize) && (buffer[bufferSize-1] != 0)){
+					result = result + new String(buffer, 0, bytesRead - 1);
+					bytesRead = instream.read(buffer);
+				}
+				result = result + new String(buffer, 0, bytesRead - 1);
+				incoming.append(result);
+			}
+			socket.close();
+		}
+		}
+		catch (IOException e) {
+		Log.e(TAG, "Message received failed.", e);
+	}
+	finally {
+	}
+}	
 	
 	
 	
