@@ -1,7 +1,9 @@
 package com.example.blue1;
 
+import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.UUID;
@@ -48,6 +50,7 @@ public class MainActivity extends Activity {
 	
 	private BluetoothSocket transferSocket;
 	private static final UUID MIUDDI = UUID.fromString("00001101-0000-1000-8000-00805F9B34FB");
+	private String mac = "00:11:67:89:3F:EF";
 	
 	private ServidorBlue servB;
 	
@@ -164,17 +167,19 @@ public class MainActivity extends Activity {
 			
 	        BluetoothSocket clientSocket 
 	          = bd.createRfcommSocketToServiceRecord(MIUDDI);
-	        Log.i("Conecta", "Cliente conec...");
+	        Log.i("Conecta", "Cliente conec ...");
 	        // Block until server connection accepted.
 	        clientSocket.connect();
 	        Log.i("Conecta", "Conectando..");
 	        StringBuilder incoming = new StringBuilder();
 
 	        //listenForMessages(clientSocket, incoming);
-
+	        
+	        LeerMsg leer = new LeerMsg(clientSocket);
+	        leer.start();
 	        // Add a reference to the socket used to send messages.
 	        transferSocket = clientSocket;
-	        Log.i("Conecta", "Enlazando...");
+	        Log.i("Conecta", "Enlazando.. .");
 	        servB = new ServidorBlue(ba, MIUDDI);
 	        servB.start();
 
@@ -194,6 +199,30 @@ public class MainActivity extends Activity {
 	    	  
 	      }
 	    }
+	
+	private class LeerMsg extends Thread{
+		private BluetoothSocket bs;
+	
+		public LeerMsg(BluetoothSocket bs){
+			this.bs = bs;
+		}
+		public void run() {
+			try{
+				while(true){
+					
+			        InputStream is = bs.getInputStream();
+			        BufferedReader bReader=new BufferedReader(new InputStreamReader(is));
+			        String lineRead=bReader.readLine();
+			        Log.i("recibido",lineRead);
+			        
+					//listenForMessages(bs);
+				}		        
+			}
+			catch(Exception err){
+				Log.e("Error leer", err.toString());
+			}
+		}
+	}
 	
 	private void iniciarDescub() {
 		Log.i("iniciando","buscando");
@@ -249,7 +278,7 @@ public class MainActivity extends Activity {
 	              BluetoothSocket serverSocket = btserver.accept();
 	              // Start listening for messages.
 	              StringBuilder incoming = new StringBuilder();
-	              listenForMessages(serverSocket, incoming);
+	              listenForMessages(serverSocket);
 	              // Add a reference to the socket used to send messages.
 	              transferSocket = serverSocket;
 	            } catch (IOException e) {
@@ -266,8 +295,7 @@ public class MainActivity extends Activity {
 	
     private boolean listening = false;
     
-	private void listenForMessages(BluetoothSocket socket, 
-            StringBuilder incoming) {
+	private void listenForMessages(BluetoothSocket socket) {
 	listening = true;
 	
 	
@@ -287,7 +315,7 @@ public class MainActivity extends Activity {
 					bytesRead = instream.read(buffer);
 				}
 				result = result + new String(buffer, 0, bytesRead - 1);
-				incoming.append(result);
+				Log.i("respu", result);
 			}
 			socket.close();
 		}
