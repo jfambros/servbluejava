@@ -83,26 +83,7 @@ public class MainActivity extends Activity {
 		
 		listaDisp.setOnItemClickListener(listaP);
 		
-		/*
-		blueAdap = BluetoothAdapter.getDefaultAdapter();
 		
-		if(blueAdap == null) {
-	    	  onBtn.setEnabled(false);
-	    	  offBtn.setEnabled(false);
-	    	  listBtn.setEnabled(false);
-	    	  buscaBtn.setEnabled(false);
-	    	  text.setText("Status: no soportado");
-	    	  
-	    	  Toast.makeText(getApplicationContext(),"No hay soporte bluetooth",
-	         		 Toast.LENGTH_LONG).show();
-	    }
-		else{
-			if (blueAdap.isEnabled()){
-				text.setText("Soportado");
-			}
-		}
-		
-		*/
 	}
 	
 	private OnClickListener bEnviarP = new OnClickListener() {
@@ -155,10 +136,7 @@ public class MainActivity extends Activity {
 			
 			Log.i("Device",alBD.get(pos).getAddress());
 			BluetoothDevice bd = alBD.get(pos);
-			/*
-			BluetoothSocket socket = bd.createInsecureRfcommSocketToServiceRecord(MIUDDI);
-			Method m = bd.getClass().getMethod("createInsecureRfcommSocket", new Class[] {int.class});
-			socket = (BluetoothSocket) m.invoke(bd, 1);*/
+			
 			SystemClock.sleep(1000);
 			ba.cancelDiscovery();
 			SystemClock.sleep(1000);
@@ -171,13 +149,10 @@ public class MainActivity extends Activity {
 	        // Block until server connection accepted.
 	        clientSocket.connect();
 	        Log.i("Conecta", "Conectando..");
-	        StringBuilder incoming = new StringBuilder();
-
-	        //listenForMessages(clientSocket, incoming);
-	        
+       
 	        LeerMsg leer = new LeerMsg(clientSocket);
 	        leer.start();
-	        // Add a reference to the socket used to send messages.
+
 	        transferSocket = clientSocket;
 	        Log.i("Conecta", "Enlazando.. .");
 	        servB = new ServidorBlue(ba, MIUDDI);
@@ -214,8 +189,7 @@ public class MainActivity extends Activity {
 			        BufferedReader bReader=new BufferedReader(new InputStreamReader(is));
 			        String lineRead=bReader.readLine();
 			        Log.i("recibido",lineRead);
-			        
-					//listenForMessages(bs);
+
 				}		        
 			}
 			catch(Exception err){
@@ -263,71 +237,6 @@ public class MainActivity extends Activity {
 	};
 
 	
-	private UUID startServerSocket(BluetoothAdapter bluetooth) {
-	      UUID uuid = UUID.fromString("a60f35f0-b93a-11de-8a39-08002009c666");
-	      String name = "bluetoothserver";
-
-	      try {
-	        final BluetoothServerSocket btserver = 
-	          bluetooth.listenUsingRfcommWithServiceRecord(name, uuid);
-
-	        Thread acceptThread = new Thread(new Runnable() {
-	          public void run() {
-	            try {
-	              // Block until client connection established.
-	              BluetoothSocket serverSocket = btserver.accept();
-	              // Start listening for messages.
-	              StringBuilder incoming = new StringBuilder();
-	              listenForMessages(serverSocket);
-	              // Add a reference to the socket used to send messages.
-	              transferSocket = serverSocket;
-	            } catch (IOException e) {
-	              Log.e("BLUETOOTH", "Server connection IO Exception", e);
-	            }
-	          }
-	        });
-	        acceptThread.start();
-	      } catch (IOException e) {
-	        Log.e("BLUETOOTH", "Socket listener IO Exception", e);
-	      }
-	      return uuid;
-	    }	
-	
-    private boolean listening = false;
-    
-	private void listenForMessages(BluetoothSocket socket) {
-	listening = true;
-	
-	
-	int bufferSize = 1024;
-	byte[] buffer = new byte[bufferSize];
-	
-	try {
-		InputStream instream = socket.getInputStream();
-		int bytesRead = -1;
-		
-		while (listening) {
-			bytesRead = instream.read(buffer);
-			if (bytesRead != -1) {
-				String result = "";
-				while ((bytesRead == bufferSize) && (buffer[bufferSize-1] != 0)){
-					result = result + new String(buffer, 0, bytesRead - 1);
-					bytesRead = instream.read(buffer);
-				}
-				result = result + new String(buffer, 0, bytesRead - 1);
-				Log.i("respu", result);
-			}
-			socket.close();
-		}
-		}
-		catch (IOException e) {
-		Log.e(TAG, "Message received failed.", e);
-	}
-	finally {
-	}
-}	
-	
-	
 	
 	protected void onActivityResult(int requestCode, int resultCode, Intent data) {
 		if (requestCode == BLUETOOTH_ACT)
@@ -335,6 +244,10 @@ public class MainActivity extends Activity {
 	          // Bluetooth has been enabled, initialize the UI.
 	          iniciaGui();
 	        }
+	        else{
+	        	Toast.makeText(getApplicationContext(), "No activado", Toast.LENGTH_LONG).show();
+	        }
+		
 	      
 	      /**
 	       * Listing 16-4: Monitoring discoverability request approval
